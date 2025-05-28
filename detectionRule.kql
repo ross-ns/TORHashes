@@ -1,0 +1,7 @@
+let hashes = externaldata (Hashes: string) 
+['https://raw.githubusercontent.com/ross-ns/TORHashes/refs/heads/master/tor_browser_hashes.csv']
+| where strlen(Hashes) == 64;
+DeviceFileEvents
+| where FileOriginUrl contains "tor-browser" or FileName contains "tor-browser" or SHA256 in (hashes)
+| where FileName endswith ".exe"
+| where ActionType == "FileCreated" or ActionType == "FileRenamed"
