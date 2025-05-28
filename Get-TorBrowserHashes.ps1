@@ -25,6 +25,7 @@ foreach ($link in $links) {
     }
 }
 
-git commit *.txt
-Git commit *.ps1
+$timeDate = Get-Date -Format "yyyyMMddTHHmmssffff"
+git add *.txt *.ps1
+git commit -m $timeDate
 git push
