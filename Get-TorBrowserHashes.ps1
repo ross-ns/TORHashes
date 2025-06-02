@@ -12,15 +12,25 @@ foreach ($link in $links) {
 
     if ($parts[0] -match "^\d+$") {
         if (!$knownVersions.Contains($link)) {
+            # Record the version numbers found
             $link | Out-File ./knownVersions.txt -Encoding ascii -Append -Force
 
+            # Scrape the hashes text files
             Invoke-WebRequest -Uri (-join ($baseUrl, $link, $signedHashFile)) -OutFile (-join ($link.Trim("/"), "_", $signedHashFile))
             Invoke-WebRequest -Uri (-join ($baseUrl, $link, $unsignedHashFile)) -OutFile (-join ($link.Trim("/"), "_", $unsignedHashFile))
 
-            $hashes += Import-Csv -Delimiter " " -Header "Hashes" -Path (-join ("./", $link.Trim("/"), "_", $signedHashFile))
-            $hashes += Import-Csv -Delimiter " " -Header "Hashes" -Path (-join ("./", $link.Trim("/"), "_", $unsignedHashFile))
+            # Read the text files
+            $textFile = Get-Content (-join ($link.Trim("/"), "_", $signedHashFile))
+            $textFile += Get-Content (-join ($link.Trim("/"), "_", $unsignedHashFile))
 
-            $hashes | Export-Csv ./tor_browser_hashes.csv -Force -NoTypeInformation -Append
+            # Remove the file names leaving only the hashes
+            $textFile | ForEach-Object { $hashes += $_.Substring(0, 64) }
+
+            # Remove duplicates
+            $hashes | Sort-Object | Get-Unique
+
+            # Output to csv
+            $hashes | Out-File ./tor_browser_hashes.csv
         }
     }
 }
