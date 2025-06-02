@@ -30,7 +30,7 @@ foreach ($link in $links) {
             $hashes | Sort-Object | Get-Unique
 
             # Output to csv
-            $hashes | Out-File ./tor_browser_hashes.csv
+            $hashes | Out-File ./tor_browser_hashes.csv -Append
         }
     }
 }
