@@ -20,12 +20,12 @@ foreach ($link in $links) {
             $hashes += Import-Csv -Delimiter " " -Header "Hashes" -Path (-join ("./", $link.Trim("/"), "_", $signedHashFile))
             $hashes += Import-Csv -Delimiter " " -Header "Hashes" -Path (-join ("./", $link.Trim("/"), "_", $unsignedHashFile))
 
-            $hashes | Select-Object -ExpandProperty Hashes | Out-File ./tor_browser_hashes.txt -Append -Force # -Encoding unicode
+            $hashes | Export-Csv ./tor_browser_hashes.csv -Force -NoTypeInformation -Append
         }
     }
 }
 
 $timeDate = Get-Date -Format "yyyyMMddTHHmmssffff"
-git add *.txt *.ps1
+git add *.txt *.csv *.ps1
 git commit -m $timeDate
 git push
