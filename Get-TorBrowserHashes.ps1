@@ -2,6 +2,8 @@ $knownVersions = Get-Content ./knownVersions.txt        #Known versions of the T
 $baseUrl = "https://dist.torproject.org/torbrowser/"
 $signedHashFile = "sha256sums-signed-build.txt"         #Filename containing the hashes of the signed builds of the TOR Browser
 $unsignedHashFile = "sha256sums-unsigned-build.txt"     #Filename containing the hashes of the unsigned builds of the TOR Browser
+$signedHashes = @()
+$unsignedHashes = @()
 $hashes = @()
 
 #Scrape the TOR download page for links
@@ -20,14 +22,28 @@ foreach ($link in $links) {
             Invoke-WebRequest -Uri (-join ($baseUrl, $link, $unsignedHashFile)) -OutFile (-join ($link.Trim("/"), "_", $unsignedHashFile))
 
             # Read the text files
-            $textFile = Get-Content (-join ($link.Trim("/"), "_", $signedHashFile))
-            $textFile += Get-Content (-join ($link.Trim("/"), "_", $unsignedHashFile))
+            $signedFiles = Get-Content (-join ($link.Trim("/"), "_", $signedHashFile))
+            $unsignedFiles += Get-Content (-join ($link.Trim("/"), "_", $unsignedHashFile))
 
             # Remove the file names leaving only the hashes
-            $textFile | ForEach-Object { $hashes += $_.Substring(0, 64) }
+            $signedFiles | ForEach-Object { $signedHashes += $_.Substring(0, 64) }
+            $unsignedFiles | ForEach-Object { $unsignedHashes += $_.Substring(0, 64) }
 
             # Remove duplicates
-            $hashes | Sort-Object | Get-Unique
+            $hashes = $signedHashes
+            $unsignedHashes | ForEach-Object { 
+                if (!$hashes.Contains($_) ) {
+                    $hashes += $_
+                }
+            }
+            
+            # Sometimes files are not changed between versions therefore potential for duplication
+            $currentCsv = Get-Content ./tor_browser_hashes.csv
+            $hashes | ForEach-Object { 
+                if (!$currentCsv.Contains($_)) {
+                    $hashes.Remove($_)
+                }
+            }
 
             # Output to csv
             $hashes | Out-File ./tor_browser_hashes.csv -Append
